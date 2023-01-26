@@ -166,7 +166,7 @@ unsafe extern "C" fn trap_handler(
 
 unsafe fn get_pc_and_fp(cx: *mut libc::c_void, _signum: libc::c_int) -> (*const u8, usize) {
     cfg_if::cfg_if! {
-        if #[cfg(all(target_os = "linux", target_arch = "x86_64"))] {
+        if #[cfg(all(any(target_os = "linux", target_os = "android"), target_arch = "x86_64"))] {
             let cx = &*(cx as *const libc::ucontext_t);
             (
                 cx.uc_mcontext.gregs[libc::REG_RIP as usize] as *const u8,
