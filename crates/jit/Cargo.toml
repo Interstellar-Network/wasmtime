@@ -33,7 +33,9 @@ features = [
   "Win32_System_Diagnostics_Debug",
 ]
 
-[target.'cfg(target_arch = "x86_64")'.dependencies]
+# MUST not try to compile it where VTune is not available
+# ie be careful with Android EMULATOR which is a "linux" + "x86_64" but no VTune
+[target.'cfg(all(target_arch = "x86_64", any(target_os = "linux", target_os = "windows")))'.dependencies]
 ittapi = { version = "0.3.0", optional = true  }
 
 [features]
