@@ -193,15 +193,39 @@ jobs:
 
   # TODO here for simple build or full test in build.yml?
   # TODO add ios aarch64, and ios simulator?
-  checks_android_aarch64:
-    name: Check Android ARM64
+  checks_android_build:
+    name: Check Android
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # cf https://stackoverflow.com/questions/66025220/paired-values-in-github-actions-matrix
+        # list of pairs:
+        # - cargo target
+        # - NDK "ANDROID_ABI"
+        android-target: [
+            {
+              cargo_target: "aarch64-linux-android",
+              android_abi: "arm64-v8a",
+            },
+            {
+              cargo_target: "x86_64-linux-android",
+              android_abi: "x86-64",
+            }
+            # TODO?
+            # {
+            #   cargo_target: "armv7-linux-androideabi",
+            #   android_abi: "armeabi-v7a",
+            #   # TODO it fails b/c of pointer size difference, at least in Scuttlebut
+            #   # but as we are still not in PROD/GA, we only care about aarch64 for now
+            #   experimental: true,
+            # },
+          ]
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: true
     - uses: ./.github/actions/install-rust
-    - run: rustup target add aarch64-linux-android
+    - run: rustup target add ${{ matrix.android-target.cargo_target }}
     ##############################################
     # android specifics: install NDK, etc
     # if not: cache the whole "Setup Android SDK"+"Delete old NDK v23"+"Install NDK v24"
@@ -229,19 +253,30 @@ jobs:
         export NDK_ROOT=$ANDROID_SDK_ROOT/ndk/25.1.8937393
         echo NDK_ROOT=$NDK_ROOT
         ls -al $NDK_ROOT/..
+
         echo "CC_armv7_linux_androideabi=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi33-clang" >> $GITHUB_ENV
         echo "CXX_armv7_linux_androideabi=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi33-clang++" >> $GITHUB_ENV
         echo "AR_armv7_linux_androideabi=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar" >> $GITHUB_ENV
         echo "CARGO_TARGET_ARMV7_LINUX_ANDROIDEABI_LINKER=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/armv7a-linux-androideabi33-clang" >> $GITHUB_ENV
+
         echo "CC_aarch64_linux_android=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang" >> $GITHUB_ENV
         echo "CXX_aarch64_linux_android=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang++" >> $GITHUB_ENV
         echo "AR_aarch64_linux_android=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar" >> $GITHUB_ENV
         echo "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang" >> $GITHUB_ENV
+
+        echo "CC_x86_64_linux_android=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android31-clang" >> $GITHUB_ENV
+        echo "CXX_x86_64_linux_android=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android31-clang++" >> $GITHUB_ENV
+        echo "AR_x86_64_linux_android=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar" >> $GITHUB_ENV
+        echo "CARGO_TARGET_X86_64_LINUX_ANDROID_LINKER=$NDK_ROOT/toolchains/llvm/prebuilt/linux-x86_64/bin/x86_64-linux-android31-clang" >> $GITHUB_ENV
+
         echo "CMAKE_TOOLCHAIN_FILE=$NDK_ROOT/build/cmake/android.toolchain.cmake" >> $GITHUB_ENV
         echo "ANDROID_PLATFORM=21" >> $GITHUB_ENV
       shell: bash
     ##############################################
-    - run: cargo check -p wasmtime --target aarch64-linux-android
+    - run: cargo check -p wasmtime --target ${{ matrix.android-target.cargo_target }}
+    - run: cargo build -p wasmtime --target ${{ matrix.android-target.cargo_target }}
+      env:
+          ANDROID_ABI: ${{ matrix.android-target.android_abi }}
 
   fuzz_targets:
     name: Fuzz Targets
