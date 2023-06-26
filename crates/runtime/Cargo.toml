@@ -1,14 +1,14 @@
 [package]
 name = "wasmtime-runtime"
-version.workspace = true
-authors.workspace = true
+version = "6.0.2"
+authors = ["The Wasmtime Project Developers"]
 description = "Runtime library support for Wasmtime"
 documentation = "https://docs.rs/wasmtime-runtime"
 license = "Apache-2.0 WITH LLVM-exception"
 categories = ["wasm"]
 keywords = ["webassembly", "wasm"]
 repository = "https://github.com/bytecodealliance/wasmtime"
-edition.workspace = true
+edition = "2021"
 
 [dependencies]
 wasmtime-asm-macros = { workspace = true }
